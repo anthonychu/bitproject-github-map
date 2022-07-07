@@ -1,0 +1,9 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "",
+    "FUNCTIONS_WORKER_RUNTIME": "node",
+    "bitprojectdemo_DOCUMENTDB": "INSERT_YOUR_DB_CONNECTION_STRING_HERE",
+    "AzureSignalRConnectionString": "INSERT_YOUR_SIGNALR_CONNECTION_STRING_HERE"
+  }
+}

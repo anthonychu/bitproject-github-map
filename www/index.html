@@ -1,0 +1,154 @@
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GitHub Map</title>
+  <link rel="stylesheet" href="https://atlas.microsoft.com/sdk/javascript/mapcontrol/2/atlas.min.css" type="text/css">
+  <script src="https://atlas.microsoft.com/sdk/javascript/mapcontrol/2/atlas.min.js"></script>
+  <style>
+    html,
+    body {
+      margin: 0;
+    }
+
+    #myMap {
+      height: 100vh;
+      width: 100vw;
+    }
+
+    a.fixed {
+      position: fixed;
+      right: 0;
+      top: 0;
+      padding: 12px 12px;
+      margin: 12px 12px;
+      z-index: 1000;
+      background-color: #fff;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+  </style>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tingle/0.16.0/tingle.min.css"
+    integrity="sha512-b+T2i3P45i1LZM7I00Ci5QquB9szqaxu+uuk5TUSGjZQ4w4n+qujQiIuvTv2BxE7WCGQCifNMksyKILDiHzsOg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+</head>
+
+<body onload="InitMap()">
+
+  <a class="fixed" id="open-modal">🤔 How do I use this?</a>
+  <div id="myMap"></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.6/signalr.min.js"
+    integrity="sha512-HM++nJVnWSOnmz1BKgJYt2Oapdxzdy2pIGaLOtPbdx3FUR+rVOvkESeJg957aXETUxjqrsBIghsdY+NAwuz0ug=="
+    crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tingle/0.16.0/tingle.min.js"
+    integrity="sha512-2B9/byNV1KKRm5nQ2RLViPFD6U4dUjDGwuW1GU+ImJh8YinPU9Zlq1GzdTMO+G2ROrB5o1qasJBy1ttYz0wCug=="
+    crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script type="text/javascript">
+
+    function InitMap() {
+      var map = new atlas.Map('myMap', {
+        zoom: 2,
+        language: 'en-US',
+        authOptions: {
+          authType: 'subscriptionKey',
+          subscriptionKey: 'INSERT_SUBSCRIPTION_KEY_HERE'
+        }
+      });
+
+      map.events.add('ready', async function () {
+        const response = await fetch('/api/people');
+        const people = await response.json();
+
+        const markers = {};
+
+        for (const person of people) {
+          const marker = createPersonMarker(person);
+
+          map.markers.add(marker);
+          markers[person.id] = marker;
+        }
+
+        const connection = new signalR.HubConnectionBuilder()
+          .withUrl('/api')
+          .withAutomaticReconnect()
+          .build();
+
+        connection.on('personChanged', function (person) {
+          const marker = markers[person.id];
+          if (marker) {
+            marker.setOptions({
+              position: [
+                person.longitude,
+                person.latitude
+              ]
+            });
+          } else {
+            map.markers.add(createPersonMarker(person));
+            markers[person.id] = marker;
+          }
+        });
+
+        await connection.start();
+        console.log('connected');
+      });
+
+      map.events.add('click', async function (e) {
+        const { position } = e;
+        const updatedPerson = {
+          longitude: position[0],
+          latitude: position[1],
+        };
+        const response = await fetch('/api/people', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(updatedPerson)
+        });
+        if (response.status === 401) {
+          if (confirm('Would you like to log in and add yourself to the map?')) {
+            window.location.href = '/.auth/login/github';
+          }
+        }
+      });
+
+      function createPersonMarker(person) {
+        return new atlas.HtmlMarker({
+          htmlContent: `<img src="https://github.com/${person.id}.png?size=40" style="border: 1px solid #555;" title="${person.id}">`,
+          position: [
+            person.longitude,
+            person.latitude
+          ],
+          anchor: 'center'
+        });
+      }
+    }
+
+    // instanciate new modal
+    var modal = new tingle.modal({
+      footer: false,
+      stickyFooter: false,
+      closeMethods: ['overlay', 'button', 'escape'],
+      closeLabel: "Close"
+    });
+
+    // set content
+    modal.setContent(`<h1>GitHub users map</h1>
+    <p>To add yourself or move your marker, click on the map.</p>
+    <p><a href="/.auth/logout">Logout</a></p>
+    `);
+
+    document.getElementById('open-modal').addEventListener('click', function () {
+      modal.open();
+    });
+  </script>
+</body>
+
+</html>

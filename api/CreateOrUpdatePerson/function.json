@@ -1,0 +1,35 @@
+{
+  "bindings": [
+    {
+      "authLevel": "anonymous",
+      "type": "httpTrigger",
+      "direction": "in",
+      "name": "req",
+      "methods": [
+        "post"
+      ],
+      "route": "people"
+    },
+    {
+      "type": "http",
+      "direction": "out",
+      "name": "res"
+    },
+    {
+      "type": "cosmosDB",
+      "direction": "out",
+      "name": "person",
+      "databaseName": "bitproject",
+      "collectionName": "people",
+      "createIfNotExists": false,
+      "connectionStringSetting": "bitprojectdemo_DOCUMENTDB"
+    },
+    {
+      "type": "signalR",
+      "direction": "out",
+      "name": "signalRMessages",
+      "hubName": "demo",
+      "connectionStringSetting": "AzureSignalRConnectionString"
+    }
+  ]
+}

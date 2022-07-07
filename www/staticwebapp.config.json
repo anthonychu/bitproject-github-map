@@ -1,0 +1,12 @@
+{
+    "routes": [
+        {
+            "route": "/api/people",
+            "methods": ["POST"],
+            "allowedRoles": ["authenticated"]
+        }
+    ],
+    "platform": {
+        "apiRuntime": "node:16"
+    }
+}

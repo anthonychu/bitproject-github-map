@@ -1,0 +1,29 @@
+{
+  "bindings": [
+    {
+      "authLevel": "anonymous",
+      "type": "httpTrigger",
+      "direction": "in",
+      "name": "req",
+      "methods": [
+        "get"
+      ],
+      "route": "people/{personId}"
+    },
+    {
+      "type": "http",
+      "direction": "out",
+      "name": "res"
+    },
+    {
+      "type": "cosmosDB",
+      "direction": "in",
+      "name": "person",
+      "databaseName": "bitproject",
+      "collectionName": "people",
+      "connectionStringSetting": "bitprojectdemo_DOCUMENTDB",
+      "id": "{personId}",
+      "partitionKey": "{personId}"
+    }
+  ]
+}
